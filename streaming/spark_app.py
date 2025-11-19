@@ -5,10 +5,15 @@ from datetime import datetime
 import time
 import traceback
 import re
+import builtins
+
+# Create alias for Python's built-in round to avoid conflict with PySpark's round
+py_round = builtins.round
+
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
+from pyspark.sql.functions import col, when, avg, count, sum as spark_sum, explode, split, lower, trim, regexp_replace, round
 from pyspark.sql.functions import avg
 
 BATCH_INTERVAL = 60
@@ -43,16 +48,27 @@ def getSparkSession():
 def getUpTime():
     return int(time.time() - globals()['startTime'])
 
-
+# New function to send data to client
 def sendToClient(data):
-    url = 'http://webapp:5000/updateData'
-    requests.post(url, json=data)
+    try:
+        url = 'http://webapp:5000/updateData'
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            print("Data sent to webapp successfully")
+        else:
+            print(f"Failed to send data to webapp. Status: {response.status_code}")
+    except Exception as e:
+        print(f"Error sending data to webapp: {e}")
 
 def getTotalRepoCountByLanguage():
     repositories = getAllRepositories()
 
     # Convert the repositories dictionary to a list of dictionaries
     repos_list = list(repositories.values())
+    
+    # If no repositories, return empty counts
+    if not repos_list:
+        return [{'language': lang, 'count': 0} for lang in LANGUAGES]
 
     # get the SparkSession object
     spark = getSparkSession()
@@ -73,6 +89,12 @@ def getTotalRepoCountByLanguage():
     return counts_list
 
 def getBatchedRepoLanguageCountsLast60Seconds():
+    batch_repositories = getBatchRepositories()
+    
+    # If no batch repositories, return empty list
+    if not batch_repositories:
+        return []
+
     # Get repos that were pushed during the last 60 secodns
     sc = globals()['SparkContext']
 
@@ -134,9 +156,13 @@ def getBatchedRepoLanguageCountsLast60Seconds():
 
 def getAvgStargazersByLanguage():
     repositories = getAllRepositories()
-
+    
     # Convert the repositories dictionary to a list of dictionaries
     repos_list = list(repositories.values())
+    
+    # If no repositories, return empty averages
+    if not repos_list:
+        return [{'language': lang, 'avg_stargazers_count': 0} for lang in LANGUAGES]
 
     # Get the SparkSession object
     spark = getSparkSession()
@@ -158,6 +184,14 @@ def getAvgStargazersByLanguage():
 
 def getTopTenFrequentWordsByLanguage():
     repositories = getAllRepositories()
+    
+    # Convert the repositories dictionary to a list of dictionaries
+    repos_list = list(repositories.values())
+    
+    # If no repositories, return empty word lists
+    if not repos_list:
+        return [{'language': lang, 'top_ten_words': []} for lang in LANGUAGES]
+    
     sc = globals()['SparkContext']
     # Convert the repositories dictionary to a RDDs
     repos = sc.parallelize(repositories.values())
@@ -426,24 +460,25 @@ def getTFIDFCosineSimilarity():
                 if max_j > len(repo_vectors):
                     max_j = len(repo_vectors)
                 for j in range(i + 1, max_j):  # Compare with next 5 repos
-                    vec1 = repo_vectors[i]['features'].toArray()
-                    vec2 = repo_vectors[j]['features'].toArray()
-                    
-                    # Calculate cosine similarity
-                    dot_product = 0.0
-                    for a, b in zip(vec1, vec2):
-                        dot_product += a * b
-                    
-                    magnitude1 = 0.0
-                    for a in vec1:
-                        magnitude1 += a * a
-                    magnitude1 = magnitude1 ** 0.5
-                    
-                    magnitude2 = 0.0
-                    for a in vec2:
-                        magnitude2 += a * a
-                    magnitude2 = magnitude2 ** 0.5
-                    
+                    # Convert Spark vectors to lists without using numpy
+                    try:
+                        # Use .toArray() but catch numpy error and use alternative
+                        vec1_array = repo_vectors[i]['features'].toArray()
+                        vec2_array = repo_vectors[j]['features'].toArray()
+                        vec1_list = vec1_array.tolist() if hasattr(vec1_array, 'tolist') else list(vec1_array)
+                        vec2_list = vec2_array.tolist() if hasattr(vec2_array, 'tolist') else list(vec2_array)
+                    except (ImportError, AttributeError):
+                        # Fallback: Convert manually without numpy
+                        vec1_sparse = repo_vectors[i]['features']
+                        vec2_sparse = repo_vectors[j]['features']
+                        vec1_list = [float(vec1_sparse[idx]) for idx in range(vec1_sparse.size)]
+                        vec2_list = [float(vec2_sparse[idx]) for idx in range(vec2_sparse.size)]
+
+                    # Calculate cosine similarity manually
+                    dot_product = sum(a * b for a, b in zip(vec1_list, vec2_list))
+                    magnitude1 = sum(a * a for a in vec1_list) ** 0.5
+                    magnitude2 = sum(a * a for a in vec2_list) ** 0.5
+
                     if magnitude1 > 0 and magnitude2 > 0:
                         cosine_sim = dot_product / (magnitude1 * magnitude2)
                         
@@ -451,7 +486,7 @@ def getTFIDFCosineSimilarity():
                             similarities.append({
                                 'repo1': repo_vectors[i]['name'],
                                 'repo2': repo_vectors[j]['name'],
-                                'similarity': float(round(cosine_sim, 3)),
+                                'similarity': float(py_round(cosine_sim, 3)),
                                 'description1': str(repo_vectors[i]['description'])[:50] + '...',
                                 'description2': str(repo_vectors[j]['description'])[:50] + '...'
                             })
@@ -564,8 +599,8 @@ def getTimeSeriesAnalysis():
                 'month': month,
                 'repo_count': count,
                 'total_stars': stars,
-                'growth_rate': round(growth_rate, 2),
-                'avg_stars': round(stars / count, 2) if count > 0 else 0
+                'growth_rate': float(py_round(growth_rate, 2)) if isinstance(growth_rate, (int, float)) else 0,
+                'avg_stars': float(py_round(stars / count, 2)) if count > 0 else 0
             })
         
         # Calculate overall trend direction
@@ -615,11 +650,11 @@ def generateData():
     }
 
     sendToClient(data)
-    generateDataTxt(data)
 
 def processRdd(time, rdd):
     print("----------- %s -----------" % str(time))
     print("Up time: %s seconds" % str(getUpTime()))
+    print("RDD count: %d" % rdd.count())
     try:
         
         repositories = getAllRepositories() 
@@ -641,9 +676,9 @@ def processRdd(time, rdd):
         generateData()
 
     except Exception as e:
-        # print("An error occurred:", e)
-        # tb_str = traceback.format_tb(e.__traceback__)
-        # print(f"Error traceback:\n{tb_str}")
+        print("An error occurred:", e)
+        tb_str = traceback.format_tb(e.__traceback__)
+        print(f"Error traceback:\n{tb_str}")
         print('Waiting for Data...')
 
 if __name__ == "__main__":
@@ -663,7 +698,10 @@ if __name__ == "__main__":
     ssc = StreamingContext(sc, BATCH_INTERVAL)
     ssc.checkpoint("checkpoint_EECS4415_Porject_3")
 
-    data = ssc.socketTextStream(DATA_SOURCE_IP, DATA_SOURCE_PORT)
+    print(f"Attempting to connect to data source at {DATA_SOURCE_IP}:{DATA_SOURCE_PORT}")
+    from pyspark.storagelevel import StorageLevel
+    data = ssc.socketTextStream(DATA_SOURCE_IP, DATA_SOURCE_PORT, storageLevel=StorageLevel.MEMORY_AND_DISK)
+    print("Connected to data source successfully")
     repos = data.flatMap(lambda json_str: [json.loads(json_str)])
     repos.foreachRDD(processRdd)
     ssc.start()

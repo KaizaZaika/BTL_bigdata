@@ -1,22 +1,23 @@
-version: '2'
-
 services:
   spark:
-    image: eecs4415/spark
+    image: lha151105/spark:latest
+    command: ["tail", "-f", "/dev/null"]
     environment:
       - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
     ports:
       - '8080:8080'
-      - '4040:4040'
-      - '4041:4041'
+      - '7077:7077'
+      - '6066:6066'
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
   spark-worker:
-    image: eecs4415/spark
+    image: lha151105/spark:latest
+    command: ["tail", "-f", "/dev/null"]
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -33,16 +34,22 @@ services:
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
   data-source:
-    image: eecs4415/python
+    image: lha151105/python:latest
+    environment:
+      - TOKEN=your_api_token_here
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
+    ports:
+      - "9999:9999"
     command: python3.9 -u /streaming/data_source.py
   webapp:
-    image: eecs4415/python
+    image: lha151105/python:latest
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
     ports:
       - '5000:5000'
     command: bash -c "pip3.9 install flask redis matplotlib && cd /streaming/webapp && python3.9 web_app.py"
   redis:
-    image: redis
+    image: lha151105/redis:latest
+    ports:
+      - '6379:6379'
