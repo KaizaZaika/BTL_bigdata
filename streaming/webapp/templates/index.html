@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big data project</title>
+    <script src="{{url_for('static', filename='index.js')}}"></script>
+</head>
+<body style="text-align: center;">
+    <h1>Big data project</h1><br>
+    <h2 id="countdown">Updating Data in: 60 seconds</h2><br>
+
+    <h1>Total number of collected repositories</h1>
+    <ul style="font-size: x-large; list-style-type: none">
+        <li id="req1-language1">Language1: 0</li>
+        <li id="req1-language2">Language2: 0</li>
+        <li id="req1-language3">Language3: 0</li>
+      </ul><br>
+
+    
+    <h1>Number of collected repositories with changes pushed during the last 60 seconds</h1>
+    <img id="req2-plot" src="" alt="Chart" height="auto" width="50%"><br>
+
+    <h1>Average number of stars by language</h1>
+    <img id="req3-plot" src="" alt="Chart" height="auto" width="50%"><br>
+
+    <h1>Total 10 most frequent words</h1>
+    <ul style="font-size: x-large; list-style-type: none">
+        <li id="req4-language1"></li>
+        <li id="req4-language2"></li>
+        <li id="req4-language3"></li>
+      </ul><br>
+
+    <h1>Topic Modeling - Emerging Technology Trends</h1>
+    <div id="topic-modeling" style="text-align: left; max-width: 800px; margin: 0 auto;">
+        <div id="req5-topics"></div>
+    </div><br>
+
+    <h1>Named Entity Recognition - Technology Ecosystem</h1>
+    <div id="ner-analysis" style="text-align: left; max-width: 800px; margin: 0 auto;">
+        <div id="req6-ner"></div>
+    </div><br>
+
+    <h1>TF-IDF Similarity - Related Projects</h1>
+    <div id="similarity-analysis" style="text-align: left; max-width: 800px; margin: 0 auto;">
+        <div id="req7-similarity"></div>
+    </div><br>
+
+    <h1>Time-Series Analysis - Technology Trends</h1>
+    <div id="time-series-analysis" style="text-align: left; max-width: 800px; margin: 0 auto;">
+        <div id="req8-time-series"></div>
+    </div><br>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+1680021817:1680030064
+JavaScript:11162:55.22
+Python:7369:169.8
+Java:5254:121.88
+Python:(for,1058),(a,889),(and,776),(the,768),(to,683),(python,596),(of,565),(in,336),(with,320),(is,273)
+Java:(for,448),(java,442),(and,400),(a,370),(the,344),(to,280),(of,258),(de,224),(is,163),(in,157)
+JavaScript:(a,791),(for,705),(and,617),(the,580),(to,491),(of,378),(with,375),(react,339),(is,276),(project,263)
