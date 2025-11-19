@@ -1,7 +1,6 @@
 services:
   spark:
     image: lha151105/spark:latest
-    command: ["tail", "-f", "/dev/null"]
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark
@@ -9,15 +8,16 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - PYTHONPATH=/tmp/python_packages
     ports:
       - '8080:8080'
       - '7077:7077'
       - '6066:6066'
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
+    command: sh -c "pip install --target /tmp/python_packages numpy && tail -f /dev/null"
   spark-worker:
     image: lha151105/spark:latest
-    command: ["tail", "-f", "/dev/null"]
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -27,16 +27,18 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - PYTHONPATH=/tmp/python_packages
     ports:
       - '28081:8081'
       - '24040:4040'
       - '24041:4041'
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
+    command: sh -c "pip install --target /tmp/python_packages numpy && tail -f /dev/null"
   data-source:
     image: lha151105/python:latest
     environment:
-      - TOKEN=your_api_token_here
+      - TOKEN=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
     volumes:
       - D:/GitHub-Real-time-Analytics/streaming:/streaming
     ports:

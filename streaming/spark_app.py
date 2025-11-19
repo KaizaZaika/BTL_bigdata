@@ -238,8 +238,25 @@ def getTopicModelingByLanguage():
     repositories = getAllRepositories()
     spark = getSparkSession()
     
+    print(f"DEBUG: Total repositories: {len(repositories)}")
+    
+    # Debug: Check what fields are available
+    if repositories:
+        sample_repo = list(repositories.values())[0]
+        print(f"DEBUG: Sample repo fields: {list(sample_repo.keys())}")
+        print(f"DEBUG: Sample repo: {sample_repo}")
+    
     # Filter repositories with descriptions
     repos_with_descriptions = [repo for repo in repositories.values() if repo.get('description') and repo['language'] in LANGUAGES]
+    
+    print(f"DEBUG: Repositories with descriptions and target languages: {len(repos_with_descriptions)}")
+    
+    # Debug: Show language breakdown
+    lang_counts = {}
+    for repo in repos_with_descriptions:
+        lang = repo['language']
+        lang_counts[lang] = lang_counts.get(lang, 0) + 1
+    print(f"DEBUG: Language breakdown: {lang_counts}")
     
     if not repos_with_descriptions:
         print("----------- REQUIREMENT 3.5 (TOPIC MODELING) -----------")
