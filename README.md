@@ -33,6 +33,7 @@ The goal of this project is to develop a robust big data system that can perform
 
 5. All components of the data streaming pipeline (i.e., data source service, Spark cluster, and web service) are containerized with Docker and Docker Compose. The system can be up and running using the following commands:
     ```
+    $ cd streaming
     $ docker-compose up
     $ docker exec streaming_spark_1 spark-submit /streaming/spark_app.py
     ```
