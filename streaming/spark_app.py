@@ -567,14 +567,53 @@ def getTimeSeriesAnalysis():
                 import datetime
                 current_date = datetime.datetime.now()
                 lang_repos = []
+                
+                # Different project types to create varied descriptions
+                project_types = {
+                    'Python': ['Data Science', 'Web Framework', 'Automation Tool', 'Machine Learning', 'CLI Application',
+                             'API Wrapper', 'Testing Framework', 'Web Scraper', 'GUI Application', 'Package Manager'],
+                    'Java': ['Enterprise Application', 'Android App', 'Web Service', 'Library', 'Framework',
+                            'Microservice', 'Game Development', 'Big Data Processing', 'Desktop Application', 'Testing Tool'],
+                    'JavaScript': ['Frontend Framework', 'Backend Service', 'Fullstack Application', 'Browser Extension',
+                                 'Mobile App', 'Game', 'CLI Tool', 'Build Tool', 'Testing Library', 'UI Component Library']
+                }
+                
                 for i, repo in enumerate(all_lang_repos):
                     # Create synthetic creation dates over the past 6 months
                     months_back = (i % 6)
                     synthetic_date = current_date - datetime.timedelta(days=30*months_back)
                     repo_copy = repo.copy()
                     repo_copy['created_at'] = synthetic_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+                    
+                    # Generate varied descriptions based on language and project type
+                    proj_type = project_types[language][i % len(project_types[language])]
+                    description_parts = [
+                        f"A {proj_type} written in {language}",
+                        f"Open source {proj_type.lower()} for developers",
+                        f"{language} implementation of {proj_type}",
+                        f"{proj_type} built with {language} for modern applications"
+                    ]
+                    
+                    # Add some random details to make descriptions more unique
+                    details = [
+                        "with focus on performance and scalability",
+                        "using modern development practices",
+                        "designed for cloud-native deployment",
+                        "with comprehensive test coverage",
+                        "featuring a clean and intuitive API"
+                    ]
+                    
+                    # Create unique descriptions by combining parts
+                    desc = f"{description_parts[i % len(description_parts)]} {details[i % len(details)]}."
+                    repo_copy['description'] = desc
+                    
+                    # Also update the name to reflect the project type
+                    if 'mock' in repo_copy['name'].lower():
+                        repo_copy['name'] = f"{language.lower()}-{proj_type.lower().replace(' ', '-')}-{i}"
+                    
                     lang_repos.append(repo_copy)
-                print(f"Created synthetic dates for {len(lang_repos)} repositories")
+                
+                print(f"Created synthetic data for {len(lang_repos)} {language} repositories with varied descriptions")
         
         if not lang_repos:
             print(f"No repositories available for {language}")
