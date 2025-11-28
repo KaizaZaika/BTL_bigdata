@@ -37,6 +37,10 @@ The goal of this project is to develop a robust big data system that can perform
     $ cd BTL_bigdata
     $ cd streaming
     $ docker-compose up -d
+    ```
+Open new command tab
+   ```
+    $ cd streaming
     $ docker exec streaming-spark-1 /opt/spark/bin/spark-submit /streaming/spark_app.py
     ```
     The web application with the real-time charts is on port 5000 of the Docker host.
