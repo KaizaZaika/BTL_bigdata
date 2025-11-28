@@ -96,7 +96,9 @@ docker-compose up -d
 This brings up five services: `spark`, `spark-worker`, `data-source`, `redis`, and `webapp`.
 
 ### 4. Submit the Spark job
+Open new temrminal tab
 ```bash
+cd streaming
 docker exec -it streaming-spark-1 \
   /opt/spark/bin/spark-submit /streaming/spark_app.py
 ```
